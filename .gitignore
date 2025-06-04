@@ -1,0 +1,32 @@
+# Composer
+/vendor/
+composer.phar
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+/coverage/
+/coverage.xml
+/.phpunit.result.cache
+/.phpunit.cache/
+
+# Application
+/var/log/*
+/var/tmp/*
+!/var/log/.gitkeep
+!/var/tmp/.gitkeep
+
+# Build artifacts
+/build/
+/dist/
