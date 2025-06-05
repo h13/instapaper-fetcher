@@ -1,10 +1,10 @@
 # Instapaper Fetcher
 
-A microservice that fetches bookmarks from Instapaper using OAuth authentication.
+A Cloud Run Functions service that fetches bookmarks from Instapaper using OAuth authentication and stores them in Google Cloud Storage.
 
 ## Overview
 
-This service is part of the Instapaper-to-Podcast pipeline. It authenticates with Instapaper's API and fetches bookmarked articles, storing them in Google Cloud Storage for processing by downstream services.
+This service authenticates with Instapaper's API and fetches bookmarked articles, storing them in Google Cloud Storage for processing by downstream services.
 
 ## Requirements
 
@@ -21,7 +21,7 @@ composer install
 
 ## Configuration
 
-Create an `.env` file based on the `env.schema.json`:
+Create an `env.json` file in the project root based on the `env.schema.json`:
 
 ```json
 {
@@ -37,44 +37,95 @@ Create an `.env` file based on the `env.schema.json`:
 }
 ```
 
-## Usage
-
-### CLI
+## Local Development
 
 ```bash
-php bin/app.php /bookmarks/fetch
-```
+# Start local server
+composer start
 
-### HTTP API
+# Run tests
+composer test
 
-```bash
-# Start the server
-php -S localhost:8080 -t public/
+# Check code style
+composer cs
 
-# Fetch bookmarks
-curl http://localhost:8080/bookmarks/fetch
+# Fix code style
+composer cs-fix
+
+# Run static analysis
+composer sa
+
+# Build project (runs all quality checks)
+composer build
 ```
 
 ## Testing
 
+The project uses PHPUnit for testing with comprehensive quality tools:
+
 ```bash
+# Run unit tests
 composer test
+
+# Generate coverage report
+composer coverage
+
+# Run all quality checks
+composer tests
 ```
 
-## Docker
+## Deployment to Cloud Run
 
 ```bash
-docker build -t instapaper-fetcher .
-docker run -v /path/to/.env:/app/.env instapaper-fetcher
+# Deploy using Cloud Build
+gcloud builds submit --config cloudbuild.yaml
 ```
+
+## API Usage
+
+```bash
+# Fetch bookmarks (local)
+curl "http://localhost:8080?limit=10&fetch_text=true"
+
+# Fetch bookmarks (deployed)
+curl "https://your-cloud-run-url?limit=10&fetch_text=true"
+```
+
+### Parameters
+- `limit`: Number of bookmarks to fetch (default: 25)
+- `fetch_text`: Whether to fetch article text (default: false)
 
 ## Architecture
 
-This service uses the BEAR.Sunday framework with:
-- Resource-oriented architecture
-- Dependency injection with Ray.Di
-- OAuth authentication for Instapaper API
-- Google Cloud Storage for output
+This service uses:
+- **Ray.Di**: Lightweight dependency injection
+- **Koriym.EnvJson**: Environment configuration with JSON schema validation
+- **Google Cloud Functions Framework**: Cloud Run Functions runtime
+- **OAuth 1.0a**: Instapaper API authentication
+- **Google Cloud Storage**: Output storage
+- **Monolog**: PSR-3 compliant logging
+
+## Development Commands
+
+```text
+start             Start local Cloud Functions server
+test              Run unit tests
+coverage          Generate test coverage report
+phpdbg            Generate test coverage report (phpdbg)
+pcov              Generate test coverage report (pcov)
+cs                Check the coding style
+cs-fix            Fix the coding style
+phpstan           Analyze code for errors using PHPStan
+psalm             Analyze code for type safety using Psalm
+phpmd             Analyze PHP code for potential issues
+baseline          Generate baseline for PHPStan and Psalm
+crc               Run composer require checker
+metrics           Build metrics report
+clean             Remove temporary files
+sa                Run static analysis
+tests             Run tests and quality checks
+build             Build project
+```
 
 ## License
 

@@ -4,27 +4,44 @@ declare(strict_types=1);
 
 namespace InstapaperFetcher\Module;
 
-use BEAR\Package\AbstractAppModule;
-use BEAR\Package\PackageModule;
-use BEAR\Package\Provide\Router\AuraRouterModule;
 use Google\Cloud\Storage\StorageClient;
-use InstapaperFetcher\Module\Provider\InstapaperModule;
-use InstapaperFetcher\Module\Provider\StorageModule;
-use InstapaperFetcher\Infrastructure\Logging\LoggerFactory;
+use GuzzleHttp\Client;
+use InstapaperFetcher\Contracts\InstapaperClientInterface;
+use InstapaperFetcher\Service\InstapaperClient;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 use Psr\Log\LoggerInterface;
 use Ray\Di\AbstractModule;
+use Ray\Di\Scope;
 
-final class AppModule extends AbstractAppModule
+class AppModule extends AbstractModule
 {
     protected function configure(): void
     {
-        $this->install(new AuraRouterModule());
-        $this->install(new PackageModule());
-        $this->install(new InstapaperModule($_ENV));
-        $this->install(new StorageModule($_ENV));
-        
         // Logger binding
-        $this->bind(LoggerInterface::class)->toProvider(LoggerProvider::class);
+        $this->bind(LoggerInterface::class)->toProvider(LoggerProvider::class)->in(Scope::SINGLETON);
+        
+        // HTTP Client binding
+        $this->bind(Client::class)->toInstance(new Client());
+        
+        // Instapaper configuration
+        $this->bind('')->annotatedWith('instapaper.config')->toInstance([
+            'consumer_key' => $_ENV['INSTAPAPER_CONSUMER_KEY'] ?? '',
+            'consumer_secret' => $_ENV['INSTAPAPER_CONSUMER_SECRET'] ?? '',
+            'access_token' => $_ENV['INSTAPAPER_ACCESS_TOKEN'] ?? '',
+            'access_token_secret' => $_ENV['INSTAPAPER_ACCESS_TOKEN_SECRET'] ?? '',
+        ]);
+        
+        // Instapaper client binding
+        $this->bind(InstapaperClientInterface::class)->to(InstapaperClient::class)->in(Scope::SINGLETON);
+        
+        // Storage configuration
+        $this->bind('')->annotatedWith('storage.bucket')->toInstance(
+            $_ENV['STORAGE_BUCKET_NAME'] ?? ''
+        );
+        
+        // Storage client binding
+        $this->bind(StorageClient::class)->toProvider(StorageClientProvider::class)->in(Scope::SINGLETON);
     }
 }
 
@@ -32,6 +49,23 @@ final class LoggerProvider implements \Ray\Di\ProviderInterface
 {
     public function get(): LoggerInterface
     {
-        return LoggerFactory::create('instapaper-fetcher');
+        $logger = new Logger('instapaper-fetcher');
+        $logger->pushHandler(new StreamHandler('php://stderr', Logger::INFO));
+        return $logger;
+    }
+}
+
+final class StorageClientProvider implements \Ray\Di\ProviderInterface
+{
+    public function get(): StorageClient
+    {
+        $config = [];
+        if (isset($_ENV['GCP_PROJECT_ID'])) {
+            $config['projectId'] = $_ENV['GCP_PROJECT_ID'];
+        }
+        if (isset($_ENV['GOOGLE_APPLICATION_CREDENTIALS'])) {
+            $config['keyFilePath'] = $_ENV['GOOGLE_APPLICATION_CREDENTIALS'];
+        }
+        return new StorageClient($config);
     }
 }

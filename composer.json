@@ -1,25 +1,27 @@
 {
-    "name": "h13/instapaper-fetcher-bear",
-    "description": "Instapaper Fetcher service with BEAR.Sunday",
-    "type": "project",
+    "name": "h13/instapaper-fetcher",
+    "description": "Instapaper Fetcher for Cloud Run Functions",
     "license": "MIT",
+    "authors": [
+        {
+            "name": "Hironori Takahashi",
+            "email": "h13.webmail@gmail.com"
+        }
+    ],
     "require": {
         "php": "^8.3",
-        "bear/package": "^1.13",
-        "bear/sunday": "^1.7",
+        "google/cloud-functions-framework": "^1.3",
         "google/cloud-storage": "^1.39",
         "guzzlehttp/guzzle": "^7.8",
         "guzzlehttp/oauth-subscriber": "^0.8.1",
         "monolog/monolog": "^3.5",
-        "koriym/env-json": "^0.1.0"
+        "koriym/env-json": "^0.1.0",
+        "ray/di": "^2.16",
+        "psr/log": "^3.0"
     },
     "require-dev": {
-        "bear/devtools": "^1.0",
-        "friendsofphp/php-cs-fixer": "^3.40",
-        "phpstan/phpstan": "^1.10",
-        "phpunit/phpunit": "^10.5",
-        "roave/security-advisories": "dev-master",
-        "vimeo/psalm": "dev-master"
+        "bamarni/composer-bin-plugin": "^1.8",
+        "phpunit/phpunit": "^10.5"
     },
     "autoload": {
         "psr-4": {
@@ -32,22 +34,75 @@
         }
     },
     "scripts": {
-        "post-install-cmd": ["@setup"],
-        "post-update-cmd": ["@setup"],
-        "setup": ["php bin/setup.php"],
-        "test": ["vendor/bin/phpunit"],
-        "cs": ["vendor/bin/php-cs-fixer fix -v --dry-run"],
-        "cs-fix": ["vendor/bin/php-cs-fixer fix -v"],
-        "sa": ["vendor/bin/phpstan analyse"],
-        "psalm": ["vendor/bin/psalm"],
-        "qa": ["@cs", "@sa", "@psalm", "@test"]
+        "start": [
+            "Composer\\Config::disableProcessTimeout",
+            "FUNCTION_SIGNATURE_TYPE=http FUNCTION_TARGET=fetchBookmarks php -S localhost:8080 vendor/google/cloud-functions-framework/router.php"
+        ],
+        "bin": "echo 'bin not installed'",
+        "test": "phpunit",
+        "coverage": "php -dzend_extension=xdebug.so -dxdebug.mode=coverage phpunit --coverage-text --coverage-html=build/coverage",
+        "phpdbg": "phpdbg -qrr phpunit --coverage-text --coverage-html ./build/coverage --coverage-clover=build/coverage.xml",
+        "pcov": "php -dextension=pcov.so -d pcov.enabled=1 phpunit --coverage-text --coverage-html=build/coverage --coverage-clover=build/coverage.xml",
+        "cs": "phpcs",
+        "cs-fix": "phpcbf src tests",
+        "phpstan": "phpstan analyse -c phpstan.neon",
+        "psalm": "psalm --show-info=false",
+        "phpmd": "phpmd text ./phpmd.xml",
+        "baseline": "phpstan analyse -c phpstan.neon --generate-baseline --allow-empty-baseline && psalm --set-baseline=psalm-baseline.xml",
+        "crc": "composer-require-checker check ./composer.json",
+        "metrics": "phpmetrics --report-html=build/metrics --exclude=Exception src",
+        "clean": [
+            "phpstan clear-result-cache",
+            "psalm --clear-cache"
+        ],
+        "sa": [
+            "@phpstan",
+            "@psalm"
+        ],
+        "tests": [
+            "@cs",
+            "@sa",
+            "@test"
+        ],
+        "build": [
+            "@clean",
+            "@cs",
+            "@sa",
+            "@coverage",
+            "@crc",
+            "@metrics"
+        ],
+        "post-install-cmd": "@composer bin all install --ansi",
+        "post-update-cmd": "@composer bin all update --ansi"
+    },
+    "scripts-descriptions": {
+        "bin": "bamarni/composer-bin-plugin command",
+        "test": "Run unit tests",
+        "coverage": "Generate test coverage report",
+        "phpdbg": "Generate test coverage report (phpdbg)",
+        "pcov": "Generate test coverage report (pcov)",
+        "cs": "Check the coding style",
+        "cs-fix": "Fix the coding style",
+        "phpmd": "Analyze PHP code for potential issues",
+        "clean": "Remove temporary files",
+        "psalm": "Analyze code for type safety using Psalm",
+        "phpstan": "Analyze code for errors using PHPStan",
+        "sa": "Run static analysis",
+        "baseline": "Generate baseline for PHPStan and Psalm",
+        "metrics": "Build metrics report",
+        "crc": "Run composer require checker",
+        "tests": "Run tests and quality checks",
+        "build": "Build project"
     },
     "config": {
-        "sort-packages": true,
         "allow-plugins": {
-            "bear/devtools": true
+            "bamarni/composer-bin-plugin": true
         }
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    "extra": {
+        "bamarni-bin": {
+            "bin-links": true,
+            "forward-command": true
+        }
+    }
 }

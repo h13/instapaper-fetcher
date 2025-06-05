@@ -26,7 +26,7 @@ final class InstapaperClient implements InstapaperClientInterface
         #[Named('instapaper.config')]
         array $config,
         ?Client $client = null,
-        LoggerInterface $logger = null
+        ?LoggerInterface $logger = null
     ) {
         $this->setLogger($logger ?? new \Psr\Log\NullLogger());
         

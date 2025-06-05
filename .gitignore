@@ -1,32 +1,38 @@
-# Composer
+# Dependencies
 /vendor/
-composer.phar
+/vendor-bin/*/vendor/
 
-# Environment
-.env
-.env.local
-.env.*.local
+# Build artifacts
+/build/
+/var/
 
-# IDE
-.idea/
-.vscode/
+# Testing
+/phpunit.xml
+/.phpunit.result.cache
+/.phpunit.cache/
+
+# Code quality tools
+/.phpcs-cache
+/.php-cs-fixer.cache
+
+# IDE and editor files
+/.idea/
+/.vscode/
 *.swp
 *.swo
 *~
 .DS_Store
 
-# Testing
-/coverage/
-/coverage.xml
-/.phpunit.result.cache
-/.phpunit.cache/
+# Environment
+/env.json
+.env
+.env.local
+.env.*.local
 
-# Application
-/var/log/*
-/var/tmp/*
-!/var/log/.gitkeep
-!/var/tmp/.gitkeep
+# Logs
+*.log
+/logs/
 
-# Build artifacts
-/build/
-/dist/
+# Claude
+.claude
+CLAUDE.md
