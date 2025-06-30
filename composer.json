@@ -15,7 +15,7 @@
         "guzzlehttp/guzzle": "^7.8",
         "guzzlehttp/oauth-subscriber": "^0.8.1",
         "monolog/monolog": "^3.5",
-        "koriym/env-json": "^0.1.0",
+        "koriym/env-json": "^1.0.0",
         "ray/di": "^2.16",
         "psr/log": "^3.0"
     },
